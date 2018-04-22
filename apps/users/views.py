@@ -1,9 +1,11 @@
 import re
 
+from django.contrib.auth import authenticate, login, logout
 from django.core.mail import send_mail
+from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from itsdangerous import  TimedJSONWebSignatureSerializer, SignatureExpired
 
 # Create your views here.
@@ -168,3 +170,55 @@ class ActiveView(View):
 
         return HttpResponse('激活成功，跳转到登录界面')
 
+
+class LoginView(View):
+    def get(self, request):
+        return render(request, 'login.html')
+
+    def post(self, request):
+        # 获取post请求参数
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remember = request.POST.get('remember')
+
+        # 验证合法性
+        if not all([username, password]):
+            return render(request, 'login.html', {'errmsg': '用户名/密码不能为空'})
+
+        # 业务处理：login
+        user = authenticate(username=username, password=password)
+
+        # 判断密码是否正确
+        if user is None:
+            return render(request, 'login.html', {'errmsg': '用户名/密码不正确'})
+
+        # 判断是否激活
+        if not user.is_active:
+            return render(request, 'login.html', {'errmsg': '用户未激活'})
+
+        # 登陆成功，保存用户登录状态
+        # request.session['auth_user_id'] = user.id
+        # user.reqest.user
+        login(request, user)
+
+
+        # 0 关闭浏览器失效； None 两周失效
+        if remember != 'on':
+            request.session.set_expiry(0)
+        else:
+            request.session.set_expiry(None)
+
+        # 响应请求
+
+
+        return redirect(reverse("goods:index"))
+
+
+class LogoutView(View):
+
+    def get(self, request):
+        """注销"""
+        # 调用 django的logout，会清楚登录用户的id，session数据
+        logout(request)
+
+        return redirect(reverse("goods:index"))

@@ -9,7 +9,10 @@ urlpatterns = [
 
     # 需要添加括号, 调用dispatch(), 判断get还是post, 返回一个函数，
     url(r'^register/$', views.RegisterView.as_view(), name='register'),
-
+    url(r'^login/$', views.LoginView.as_view(), name='login'),
+    url(r'^logout/$', views.LogoutView.as_view(), name='logout'),
     #
     url(r'^active/(.+)$', views.ActiveView.as_view(), name='Active'),
+
+
 ]

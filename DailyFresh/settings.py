@@ -133,3 +133,19 @@ EMAIL_HOST_USER = 'Jason_zhengminghao@163.com'       # 发件人（天天生鲜�
 EMAIL_HOST_PASSWORD = 'zmh1995105'           # 邮箱客户端授权码，非邮箱登录密码
 EMAIL_FROM = '天天生鲜<Jason_zhengminghao@163.com>'   # 收件人接收到邮件后，显示在‘发件人’中的内容，如下图
 
+# django项目的缓存配置
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": "redis://127.0.0.1:6379/3",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "PASSWORD": ""
+        }
+    }
+}
+
+# session数据缓存到Redis中
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+SESSION_CACHE_ALIAS = "default"
+
