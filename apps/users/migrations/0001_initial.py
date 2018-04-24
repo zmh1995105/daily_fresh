@@ -2,11 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
-from django.conf import settings
+import django.utils.timezone
+import django.contrib.auth.models
 import tinymce.models
 import django.core.validators
-import django.contrib.auth.models
-import django.utils.timezone
+from django.conf import settings
 
 
 class Migration(migrations.Migration):
@@ -30,6 +30,7 @@ class Migration(migrations.Migration):
                 ('is_staff', models.BooleanField(verbose_name='staff status', default=False, help_text='Designates whether the user can log into this admin site.')),
                 ('is_active', models.BooleanField(verbose_name='active', default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.')),
                 ('date_joined', models.DateTimeField(verbose_name='date joined', default=django.utils.timezone.now)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('groups', models.ManyToManyField(verbose_name='groups', blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.Group')),
                 ('user_permissions', models.ManyToManyField(verbose_name='user permissions', blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.Permission')),
@@ -45,6 +46,7 @@ class Migration(migrations.Migration):
             name='Address',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('receiver_name', models.CharField(verbose_name='收件人', max_length=20)),
                 ('receiver_mobile', models.CharField(verbose_name='联系电话', max_length=11)),
@@ -61,6 +63,7 @@ class Migration(migrations.Migration):
             name='TestModel',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(max_length=20)),
                 ('goods_detail', tinymce.models.HTMLField(verbose_name='商品详情', null=True)),

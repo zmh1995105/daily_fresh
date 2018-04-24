@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.db import migrations, models
+import tinymce.models
 
 
 class Migration(migrations.Migration):
@@ -14,6 +15,7 @@ class Migration(migrations.Migration):
             name='GoodsCategory',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(verbose_name='类别名称', max_length=20)),
                 ('logo', models.CharField(verbose_name='图标标识', max_length=100)),
@@ -29,6 +31,7 @@ class Migration(migrations.Migration):
             name='GoodsImage',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('image', models.ImageField(verbose_name='图片', upload_to='goods')),
             ],
@@ -42,6 +45,7 @@ class Migration(migrations.Migration):
             name='GoodsSKU',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(verbose_name='名称', max_length=100)),
                 ('title', models.CharField(verbose_name='简介', max_length=200)),
@@ -63,9 +67,10 @@ class Migration(migrations.Migration):
             name='GoodsSPU',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(verbose_name='名称', max_length=100)),
-                ('desc', models.TextField(verbose_name='商品描述', blank=True, default='')),
+                ('desc', tinymce.models.HTMLField(verbose_name='商品描述', blank=True, default='')),
             ],
             options={
                 'verbose_name': '商品',
@@ -77,6 +82,7 @@ class Migration(migrations.Migration):
             name='IndexCategoryGoods',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('display_type', models.SmallIntegerField(verbose_name='展示类型', choices=[(0, '标题'), (1, '图片')])),
                 ('index', models.SmallIntegerField(verbose_name='顺序', default=0)),
@@ -93,6 +99,7 @@ class Migration(migrations.Migration):
             name='IndexPromotion',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('name', models.CharField(verbose_name='活动名称', max_length=50)),
                 ('url', models.CharField(verbose_name='活动连接', max_length=100)),
@@ -109,6 +116,7 @@ class Migration(migrations.Migration):
             name='IndexSlideGoods',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('image', models.ImageField(verbose_name='图片', upload_to='banner')),
                 ('index', models.SmallIntegerField(verbose_name='顺序', default=0)),

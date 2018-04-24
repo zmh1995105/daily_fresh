@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
             name='OrderGoods',
             fields=[
                 ('id', models.AutoField(verbose_name='ID', primary_key=True, serialize=False, auto_created=True)),
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('count', models.IntegerField(verbose_name='购买数量', default=1)),
                 ('price', models.DecimalField(verbose_name='单价', max_digits=10, decimal_places=2)),
@@ -26,6 +27,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='OrderInfo',
             fields=[
+                ('create_time', models.DateTimeField(auto_now_add=True)),
                 ('update_time', models.DateTimeField(auto_now=True)),
                 ('order_id', models.CharField(verbose_name='订单号', primary_key=True, max_length=64, serialize=False)),
                 ('total_count', models.IntegerField(verbose_name='商品总数', default=1)),

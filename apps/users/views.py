@@ -1,19 +1,24 @@
 import re
 
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
+from django_redis import get_redis_connection
 from itsdangerous import  TimedJSONWebSignatureSerializer, SignatureExpired
 
 # Create your views here.
 from django.views.generic import View
+from redis import StrictRedis
 
 from DailyFresh import settings
-from apps.users.models import User
+from apps.goods.models import GoodsSKU
+from apps.users.models import User, Address
 from celery_task.tasks import send_active_mail
+from utils.common import LoginRequiredViewMixin
 
 
 def register(request):
@@ -208,8 +213,12 @@ class LoginView(View):
         else:
             request.session.set_expiry(None)
 
-        # 响应请求
+        next = request.GET.get('next')
 
+        if next:
+            return redirect(next)
+
+        # 响应请求
 
         return redirect(reverse("goods:index"))
 
@@ -222,3 +231,100 @@ class LogoutView(View):
         logout(request)
 
         return redirect(reverse("goods:index"))
+
+
+class UserOrderView(LoginRequiredViewMixin, View):
+
+    def get(self, request):
+
+        # if not request.user.is_authenticated():
+        #     return  render(request, 'login.html')
+
+
+
+        return render(request, 'user_center_order.html', {"which_page": 2})
+
+class UserInfoView(LoginRequiredViewMixin, View):
+
+    def get(self, request):
+        try:
+
+            # 查询新增的地址
+            address = Address.objects.filter(user=request.user).order_by('-create_time')[0]
+            # address = request.user.address_set.latest('create_time')
+        except:
+            address = None
+
+        # todo: 读取当前用户浏览记录
+        strict_redis = get_redis_connection()  # type: StrictRedis
+        # history_1 = [3, 1, 2]
+        key = 'history_%s' % request.user.id
+        # 从左往右取，去5个商品id
+        sku_ids = strict_redis.lrange(key, 0 , 4)
+        print(sku_ids)
+        # 查询出的结果是[1, 2, 3]
+        # good_list = GoodsSKU.objects.filter(id__in=sku_ids)
+
+        # 解决：
+        good_list = []
+        for sku_id in sku_ids:
+            good_list.append(GoodsSKU.objects.get(id=sku_id))
+
+        context = {
+            "which_page": 1,
+            'address': address,
+            # 系统会自动传
+            'user': request.user,
+            'good_list': good_list
+        }
+        return render(request, 'user_center_info.html', context)
+
+class UserSiteView(LoginRequiredViewMixin, View):
+    # 继承的类，先继承的在前面
+    def get(self, request):
+        try:
+
+            # 查询新增的地址
+            address = Address.objects.filter(user=request.user).order_by('-create_time')[0]
+            # address = request.user.address_set.latest('create_time')
+        except Exception as r:
+            print(r)
+            address = None
+
+        context = {
+            "which_page": 3,
+            'address': address,
+            # # 系统会自动传
+            # 'user': request.user
+        }
+        return render(request, 'user_center_site.html', context)
+
+    def post(self, request):
+
+        # 获取post请求参数
+        receiver = request.POST.get('receiver')
+        detail_addr = request.POST.get('detail_addr')
+        zip_code = request.POST.get('zip_code')
+        mobile = request.POST.get('mobile')
+
+        # 合法性校验
+        if not all([receiver, detail_addr, zip_code, mobile]):
+            return render(request, 'user_center_site.html', {'errmsg': "参数不能为空！"})
+
+        # 新增一个地址, 创建对象时封装的方法
+        Address.objects.create(
+            receiver_name=receiver,
+            receiver_mobile=mobile,
+            detail_addr=detail_addr,
+            zip_code=zip_code,
+            user=request.user,
+        )
+
+        # 添加地址成功，返回当前页面，刷新数据
+
+        return redirect(reverse('users:site'))
+
+
+# @login_required
+# def address(request):
+#     return render(request, 'user_center_site.html', {"which_page": 1})
