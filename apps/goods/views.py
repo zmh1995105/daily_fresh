@@ -1,12 +1,13 @@
 from django.core.cache import cache
-from django.shortcuts import render
+from django.core.urlresolvers import reverse
+from django.shortcuts import render, redirect
 
 # Create your views here.
 from django.views.generic import View
 from django_redis import get_redis_connection
 from redis import StrictRedis
 
-from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods
+from apps.goods.models import GoodsCategory, IndexSlideGoods, IndexPromotion, IndexCategoryGoods, GoodsSKU
 from apps.users.models import User
 
 class GetCartCountView(object):
@@ -62,6 +63,7 @@ class IndexView(View, GetCartCountView):
                     'categories': categories,
                     'slide_skus': slide_skus,
                     'promotions': promotions,
+
                 }
 
             cache.set('index_page_data', context, 60*30)
@@ -77,3 +79,52 @@ class IndexView(View, GetCartCountView):
         return render(request, 'index.html', context)
 
 
+class DetailView(View, GetCartCountView):
+    def get(self, request, sku_id):
+        # todo: 查询数据库数据
+
+        try:
+            # 查询商品sku
+            sku = GoodsSKU.objects.get(id=sku_id)
+
+
+        except GoodsSKU.DoesNotExist:
+            return redirect(reverse('goods:index'))
+
+        # 查询所有商品分类信息
+        categories = GoodsCategory.objects.all()
+
+        # 查询最新商品推荐
+        new_skus = GoodsSKU.objects.filter(category=sku.category).order_by('-create_time')[0:2]
+
+        # 如果已登录，查询购物车信息
+        cart_count = self.get_cart_count(request)
+
+        # todo: 查询其他规格商品
+
+        other_skus = GoodsSKU.objects.filter(spu=sku.spu).exclude(id=sku_id)
+
+        # todo: 保存用户浏览记录
+        if request.user.is_authenticated():
+            strict_redis = get_redis_connection()  # type: StrictRedis
+
+            key = 'hitory_%s' % request.user.id
+            # 删除表内已有的当前sku_id
+            strict_redis.lrem(key, 0, sku_id)
+
+            # 添加最新的sku_id到最前面
+            strict_redis.lpush(key, sku_id)
+
+            # 最多只保留5个元素
+            strict_redis.ltrim(key, 0, 4)
+
+        context = {
+            'sku': sku,
+            'categories': categories,
+            'new_skus': new_skus,
+            'cart_count': cart_count,
+            'other_skus': other_skus
+
+
+        }
+        return render(request,'detail.html', context)
