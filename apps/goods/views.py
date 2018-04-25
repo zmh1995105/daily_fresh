@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.shortcuts import render
 
 # Create your views here.
@@ -40,30 +41,39 @@ class IndexView(View, GetCartCountView):
         return render(request, 'index.html')
 
     def get(self, request):
-        categories = GoodsCategory.objects.all()
-        slide_skus = IndexSlideGoods.objects.all().order_by('index')
-        promotions = IndexPromotion.objects.all().order_by('index')[0:2]
-        # catagory_skus = IndexCategoryGoods.objects.all()[]
-        for c in categories:
-            # 查询当前类别所有的文字和图片商品
-            text_skus = IndexCategoryGoods.objects.filter(display_type=0, category=c).order_by('index')
+        # 读取redis中的缓存数据
+        context = cache.get('index_page_data')
+        if not context:
+            print('no cache!')
+            categories = GoodsCategory.objects.all()
+            slide_skus = IndexSlideGoods.objects.all().order_by('index')
+            promotions = IndexPromotion.objects.all().order_by('index')[0:2]
+            # catagory_skus = IndexCategoryGoods.objects.all()[]
+            for c in categories:
+                # 查询当前类别所有的文字和图片商品
+                text_skus = IndexCategoryGoods.objects.filter(display_type=0, category=c).order_by('index')
 
-            image_skus = IndexCategoryGoods.objects.filter(display_type=1, category=c).order_by('index')[0:4]
+                image_skus = IndexCategoryGoods.objects.filter(display_type=1, category=c).order_by('index')[0:4]
 
-            # 动态新增实例属性
-            c.text_skus = text_skus
-            c.image_skus = image_skus
+                # 动态新增实例属性
+                c.text_skus = text_skus
+                c.image_skus = image_skus
+                context = {
+                    'categories': categories,
+                    'slide_skus': slide_skus,
+                    'promotions': promotions,
+                }
+
+            cache.set('index_page_data', context, 60*30)
+        else:
+            print('use cache')
 
         cart_count = self.get_cart_count(request)
 
+        # 给字典新增键值
+        context['cart_count'] = cart_count
+        # context.update({'cart_count': cart_count})
 
-
-        context = {
-            'categories': categories,
-            'slide_skus': slide_skus,
-            'promotions': promotions,
-            'cart_count': cart_count
-        }
         return render(request, 'index.html', context)
 
 
