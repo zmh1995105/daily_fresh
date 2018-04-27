@@ -1,4 +1,5 @@
 from django.core.cache import cache
+from django.core.paginator import Paginator
 from django.core.urlresolvers import reverse
 from django.shortcuts import render, redirect
 
@@ -128,3 +129,66 @@ class DetailView(View, GetCartCountView):
 
         }
         return render(request,'detail.html', context)
+
+
+class ListView(View, GetCartCountView):
+    def get(self, request, category_id, page_num):
+        """
+        商品详情页
+        :param request:
+        :param category_id:
+        :param page_num:
+        :return:
+        """
+
+        # 获取参数
+        sort = request.GET.get('sort')
+
+        # 校验参数合法性
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return redirect(reverse("goods:index"))
+
+        # 查询对应商品商品数据
+
+        categories = GoodsCategory.objects.all()
+        try:
+
+            new_skus = GoodsSKU.objects.filter(category=category).order_by('-create_time')[0:2]
+
+        except GoodsSKU:
+            new_skus = None
+
+        if sort in ['-sales', '-price']:
+            skus = GoodsSKU.objects.filter(category=category).order_by(sort)
+
+        else:
+            skus = GoodsSKU.objects.filter(category=category)
+            sort = 'default'
+
+        cart_count = self.get_cart_count(request)
+
+        # 显示对象 每页显示个数
+        paginator = Paginator(skus, 4)
+        try:
+            page = paginator.page(page_num)
+
+        except:
+            page = paginator.page(1)
+
+
+        context = {
+            "category": category,
+            "categories": categories,
+            # 'skus': skus,
+            'page': page,
+            'page_range': paginator.page_range,
+            'new_skus': new_skus,
+            'sort': sort,
+            'cart_count': cart_count,
+
+
+
+        }
+        return render(request, 'list.html', context)

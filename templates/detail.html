@@ -25,9 +25,9 @@
 	</div>
 
 	<div class="breadcrumb">
-		<a href="#">全部分类</a>
+		<a href="{% url 'goods:index' %}">全部分类</a>
 		<span>></span>
-		<a href="#">{{ sku.category.name }}</a>
+		<a href="{% url 'goods:list' sku.category.id 1%}?sort=default ">{{ sku.category.name }}</a>
 		<span>></span>
 		<a href="#">商品详情</a>
 	</div>
@@ -61,8 +61,9 @@
 					<a href="javascript:;" class="add fr">+</a>
 					<a href="javascript:;" class="minus fr">-</a>
 				</div>
+				
 			</div>
-			<div class="total">总价：<em>16.80元</em></div>
+			<div class="total">总价：<em>{{ sku.price }}元</em></div>
 			<div class="operate_btn">
 				<a href="javascript:;" class="buy_btn">立即购买</a>
 				<a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
@@ -126,6 +127,53 @@
 
 			});
 		})
+
+        update_amount()
+
+        function update_amount() {
+            var iPrice = $('.show_pirze').children('em').text()
+            var iCount = parseInt($('.num_show').val())
+            var iTotal = iCount * iPrice
+            $('.total').children('em').text(iTotal.toFixed(2) + '元')
+        }
+
+        $('.add').click(function () {
+            var iCount = $('.num_show').val()
+            iCount = parseInt(iCount) + 1
+
+            if (iCount <= {{ sku.stock }}){
+                $('.num_show').val(iCount)
+            }
+            update_amount()
+
+
+        })
+        $('.minus').click(function () {
+            var iCount = $('.num_show').val().trim()
+            iCount = parseInt(iCount) - 1
+
+            if (iCount >= 1){
+                $('.num_show').val(iCount)
+            }
+            update_amount()
+        })
+
+        $('.num_show').blur(function () {
+            var iCount = $('.num_show').val()
+
+            if (isNaN(iCount) || iCount.trim().length < 1 || parseInt(iCount) < 1 ){
+                iCount = 1
+            }
+            if (iCount > {{ sku.stock }}) {
+                iCount = {{ sku.stock }}
+            }
+            $('.num_show').val(iCount)
+            update_amount()
+
+        })
+
+
+
 	</script>
 
 {% endblock %}

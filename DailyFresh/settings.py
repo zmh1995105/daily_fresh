@@ -46,6 +46,7 @@ INSTALLED_APPS = (
     'apps.orders',
     'apps.users',
     'tinymce',  # 使用第三方富文本编辑器
+    'haystack',
 
 )
 
@@ -161,3 +162,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'static/media')
 # 指定使用自定义文件存储类
 DEFAULT_FILE_STORAGE = 'utils.fdfs.storage.FdfsStorage'
 
+# 配置haystack框架
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        # 使用whoosh搜索引擎
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        # 指定生成的索引库保存在哪个目录下
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+# 当添加、修改、删除了数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# 设置全文检索结果每页显示2条数据
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 2
