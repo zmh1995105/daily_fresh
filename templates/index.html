@@ -26,7 +26,7 @@
 		<div class="slide fl">
 			<ul class="slide_pics">
                 {% for slide_sku in slide_skus %}
-                     <li><img src="{{ slide_sku.image.url }}" alt="幻灯片"></li>
+                    <li><a href="{% url 'goods:detail' slide_sku.sku.id %}"><img src="{{ slide_sku.image.url }}" alt="幻灯片"></a></li>
                 {% endfor %}
 			</ul>
 			<div class="prev"></div>
@@ -35,7 +35,7 @@
 		</div>
 		<div class="adv fl">
             {% for promotion in promotions %}
-                  <a href="{% url 'goods:detail' promotion.id %}"><img src="{{ promotion.image.url }}"></a>
+                  <a href="{{ promotion.url }}"><img src="{{ promotion.image.url }}"></a>
             {% endfor %}
 
 		</div>

@@ -45,18 +45,12 @@
 
             {% if other_skus %}
                 <div>
-                    <p>其他规格：</p>
-                    <ul>
+                    <p>其他规格：&nbsp;&nbsp;&nbsp;&nbsp;
                         {% for other_sku in other_skus %}
-                            <li><a href="{% url 'goods:detail' other_sku.id %}">{{ other_sku.name }}</a></li>
-
+                            <a href="{% url 'goods:detail' other_sku.id %}">{{ other_sku.name }}</a>&nbsp;&nbsp;&nbsp;&nbsp;
                         {% endfor %}
-                    </ul>
-
-
-
+                    </p>
                 </div>
-
             {% endif %}
 
 

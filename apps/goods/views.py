@@ -108,7 +108,7 @@ class DetailView(View, GetCartCountView):
         if request.user.is_authenticated():
             strict_redis = get_redis_connection()  # type: StrictRedis
 
-            key = 'hitory_%s' % request.user.id
+            key = 'history_%s' % request.user.id
             # 删除表内已有的当前sku_id
             strict_redis.lrem(key, 0, sku_id)
 
