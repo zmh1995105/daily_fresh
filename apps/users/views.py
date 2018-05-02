@@ -3,6 +3,7 @@ import re
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
+from django.core.paginator import Paginator, EmptyPage
 from django.core.urlresolvers import reverse
 from django.db import IntegrityError
 from django.http import HttpResponse
@@ -16,6 +17,7 @@ from redis import StrictRedis
 
 from DailyFresh import settings
 from apps.goods.models import GoodsSKU
+from apps.orders.models import OrderInfo, OrderGoods
 from apps.users.models import User, Address
 from celery_task.tasks import send_active_mail
 from utils.common import LoginRequiredViewMixin
@@ -215,12 +217,17 @@ class LoginView(View):
 
         next = request.GET.get('next')
 
-        if next:
+        # 响应请求
+        if next is None:
+            return redirect(reverse("goods:index"))
+
+        elif next == 'order/place':
+            return redirect(reverse('cart/'))
+        else:
             return redirect(next)
 
-        # 响应请求
 
-        return redirect(reverse("goods:index"))
+
 
 
 class LogoutView(View):
@@ -235,14 +242,42 @@ class LogoutView(View):
 
 class UserOrderView(LoginRequiredViewMixin, View):
 
-    def get(self, request):
+    def get(self, request, page_num):
+
+        orders = OrderInfo.objects.filter(user=request.user).order_by('-create_time')
+        for order in orders:
+            # 查询某个订单下的所有商品
+            order_skus = OrderGoods.objects.filter(order=order)
+            for order_sku in order_skus:
+                # 新增小计金额
+                order_sku.amount = order_sku.count * order_sku.price
+
+            # 新增实例属性
+            order.status_desc = OrderInfo.ORDER_STATUS[order.status]
+            order.total_pay = order.trans_cost + order.total_amount
+            order.order_skus = order_skus
+
+        paginator = Paginator(orders, 2)
+
+        try:
+            page = paginator.page(page_num)
+        except EmptyPage:
+            page = paginator.page(1)
+        page_range = paginator.page_range
+
+        context = {
+            'which_page': 2,
+            'orders': orders,
+            'page': page,
+            'page_range': page_range
+        }
 
         # if not request.user.is_authenticated():
         #     return  render(request, 'login.html')
 
 
 
-        return render(request, 'user_center_order.html', {"which_page": 2})
+        return render(request, 'user_center_order.html', context)
 
 class UserInfoView(LoginRequiredViewMixin, View):
 

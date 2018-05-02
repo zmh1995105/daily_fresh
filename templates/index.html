@@ -55,7 +55,7 @@
 		</div>
 
 		<div class="goods_con clearfix">
-			<div class="goods_banner fl"><img src="{{ category.image.url }}"></div>
+            <div class="goods_banner fl"><a href="{% url 'goods:list' category.id 1%}"><img src="{{ category.image.url }}"></a></div>
 			<ul class="goods_list fl">
                 {% for image_sku in category.image_skus %}
                     <li>

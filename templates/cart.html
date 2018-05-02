@@ -1,0 +1,194 @@
+{% extends 'base_no_cart.html' %}
+{% block title %}
+    天天生鲜-购物车
+{% endblock %}
+
+{% block page_title %}
+    购物车
+{% endblock %}
+
+
+{% block content %}
+    <div class="total_count">全部商品<em>{{ total_count }}</em>件</div>
+    <ul class="cart_list_th clearfix">
+        <li class="col01">商品名称</li>
+        <li class="col02">商品单位</li>
+        <li class="col03">商品价格</li>
+        <li class="col04">数量</li>
+        <li class="col05">小计</li>
+        <li class="col06">操作</li>
+    </ul>
+    <form method="post" action="{% url 'orders:place' %}">
+    {% csrf_token %}
+
+    {% for sku in skus %}
+        <ul class="cart_list_td clearfix">
+            <!-- post 提交参数，一键多值 -->
+            <li class="col01"><input type="checkbox" name="sku_ids" checked="true" value='{{ sku.id }}'></li>
+            <li class="col02"><img src="{{ sku.default_image.url }}"></li>
+            <li class="col03">{{ sku.name }}<br><em>{{ sku.price }}元/{{ sku.unit }}</em></li>
+            <li class="col04">{{ sku.unit }}</li>
+            <li class="col05">{{ sku.price }}元</li>
+            <li class="col06">
+                <div class="num_add">
+                    <a href="javascript:;" class="add fl">+</a>
+                    <input type="text" class="num_show fl" value="{{ sku.count }}" sku_id="{{ sku.id }}">
+                    <a href="javascript:;" class="minus fl">-</a>
+                </div>
+            </li>
+            <li class="col07">{{ sku.amount }}元</li>
+            <li class="col08"><a href="javascript:;">删除</a></li>
+        </ul>
+
+    {% endfor %}
+
+
+    <ul class="settlements">
+        <li class="col01"><input type="checkbox" name="" checked=""></li>
+        <li class="col02">全选</li>
+        <li class="col03">合计(不含运费)：<span>¥</span><em>{{ total_amount }}</em><br>共计<b>{{ total_count }}</b>件商品</li>
+        <li class="col04"><input type="submit" value="去结算"></li>
+    </ul>
+    </form>
+
+{% endblock %}
+
+
+{% block js_bottom %}
+    {% load staticfiles %}
+    <script>
+        update_total_amount_count();
+        function update_total_amount_count() {
+            // todo: 更新商品总数量和总金额
+            var total_count = 0;
+            var total_amount = 0;
+            // 查找checked的ul标签 parents
+            $('.cart_list_td').find(':checked').parents('ul').each(function () {
+                var count = $(this).find('.num_show').val();
+                var amount = $(this).find('.col07').text();
+                total_count += parseInt(count);
+                total_amount += parseFloat(amount);
+                // alert(total_amount)
+
+            });
+
+            $('.settlements').find('.col03').find('em').html(total_amount);
+            $('.settlements').find('.col03').find('b').html(total_count);
+        }
+
+        function update_sku_amount($ul) {
+            var count = $ul.find('.col05').text();
+            var price = $ul.find('.num_show').val();
+            var amount = parseInt(count) * parseFloat(price);
+            $ul.find('.col07').text(amount.toFixed(2) + '元');
+        }
+
+        function update_post(sku_id, count, $this) {
+            var csrf = $('input[name="csrfmiddlewaretoken"]').val();
+            var params = {
+                'sku_id': sku_id,
+                'count': count,
+                'csrfmiddlewaretoken': csrf
+            };
+            var $input = $this.parent().children('.num_show');
+            var $ul = $this.parents('ul')
+            $.post('/cart/update', params, function (data) {
+
+                if (data.code == 0) {
+                    // 请求成功
+                    // alert(data.total_count);
+                    $input.val(count);
+
+                    update_sku_amount($ul);
+                    // 刷新勾选的total_amount
+                    update_total_amount_count();
+                    // 刷新页面左上角的total_amount
+                    $('.total_count').children('em').text(data.total_count);
+                } else {
+                    // 请求失败
+                    alert(data.errmsg);
+                }
+            })
+        }
+
+        // todo: 全选与全不全
+        $('.settlements').find(":checkbox").change(function () {
+            var check = $(this).prop('checked')
+            $('.cart_list_td').find(':checkbox').each(function () {
+                $(this).prop('checked', check)
+            })
+            update_total_amount_count();
+        })
+
+        // todo: 部分勾选状态改变，更新
+        $('.cart_list_td').find(':checkbox').change(function () {
+            var selected_count = $('.cart_list_td').find(':checked').length;
+            var count = $('.cart_list_td').length;
+            if (count == selected_count) {
+                $('.settlements').find(':checkbox').prop('checked', true);
+            } else {
+                $('.settlements').find(':checkbox').prop('checked', false);
+            }
+            update_total_amount_count();
+        })
+
+
+
+        $('.num_add').delegate('a', 'click', function () {
+            var sku_id = $(this).parent().children('.num_show').attr('sku_id');
+            var count = $(this).parent().children('.num_show').val();
+
+            var sign = $(this).text()
+            // alert(parseInt(sign + '1'))
+            // alert(sku_id + ' ' + count + ' ' + csrf );
+            count = parseInt(count) + parseInt(sign + '1') ;
+            if (count > 0) {
+                update_post(sku_id, count, $(this));
+            }
+        })
+    
+        $('.num_add').children('.num_show').blur(function () {
+            var count = $(this).val();
+            var sku_id = $(this).attr('sku_id');
+
+            if (isNaN(count) || count.trim().length < 1 || parseInt(count) < 1) {
+                $(this).val();
+            }
+            update_post(sku_id, count, $(this));
+
+        })
+
+        $('.cart_list_td').find('.col08').click(function () {
+            var sku_id = $(this).parent().find('.num_show').attr('sku_id');
+            var csrf = $('input[name="csrfmiddlewaretoken"]').val();
+            params = {
+                'sku_id': sku_id,
+                'csrfmiddlewaretoken': csrf
+            };
+
+            $ul = $(this).parent();
+            $.post('/cart/delete', params, function (data) {
+                if (data.code == 0) {
+                    $ul.remove();
+                    update_sku_amount($ul);
+                    update_total_amount_count();
+                    // 刷新页面左上角的total_amount
+                    $('.total_count').children('em').text(data.total_count);
+                }else {
+                    alert(data.errmsg);
+                }
+            })
+        })
+
+
+
+
+    </script>
+
+
+
+{% endblock %}
+
+
+
+

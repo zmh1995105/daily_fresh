@@ -18,7 +18,7 @@ urlpatterns = [
     url(r'^active/(.+)$', views.ActiveView.as_view(), name='Active'),
 
     # 用户中心
-    url(r'^orders$', views.UserOrderView.as_view(), name='orders'),
+    url(r'^orders/(\d+)$', views.UserOrderView.as_view(), name='orders'),
     url(r'^$', views.UserInfoView.as_view(), name='info'),
     url(r'^site$', views.UserSiteView.as_view(), name='site'),
     # url(r'^site$', views.address, name='site'),

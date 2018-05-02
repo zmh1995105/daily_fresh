@@ -34,7 +34,7 @@ class FdfsStorage(FileSystemStorage):
 
     def url(self, name):
         path = super().url(name)
-        return "http://192.168.46.65:8888/" + path
+        return "http://192.168.46.63:8888/" + path
 
 
 
